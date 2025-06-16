@@ -3,6 +3,11 @@ name: Release
 on:
   push:
     branches: [ "main" ]
+  # Build every Monday
+  schedule:
+    - cron: '0 0 * * 1'
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -32,3 +37,15 @@ jobs:
         run: |
           west build -p -b beagleplay/cc1352p7 modules/lib/micropython/ports/zephyr -d build
           mv build/zephyr/zephyr.bin beagleplay_cc1352p7.bin
+
+      - name: Pre-Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          prerelease: true
+          name: Continuous Release
+          tag_name: continuous-release
+          body: Continuous builds of MicroPython
+          files: |
+            beagleconnect_freedom.bin
+            beagleplay_cc1352p7.bin
