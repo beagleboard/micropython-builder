@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build Artifacts for supported boards
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -20,9 +20,15 @@ jobs:
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
-          app-path: beagleconnect_freedom
+          app-path: upstream_boards
           toolchains: arm-zephyr-eabi
-          manifest-file-name: west.yml
 
-      - name: Build firmware
-        run: west build -p -b beagleconnect_freedom modules/lib/micropython/ports/zephyr -d build
+      - name: Build BeagleConnect Freedom firmware
+        run: |
+          west build -p -b beagleconnect_freedom modules/lib/micropython/ports/zephyr -d build
+          mv build/zephyr/zephyr.bin beagleconnect_freedom.bin
+
+      - name: Build BeaglePlay CC1352P7 firmware
+        run: |
+          west build -p -b beagleplay/cc1352p7 modules/lib/micropython/ports/zephyr -d build
+          mv build/zephyr/zephyr.bin beagleplay_cc1352p7.bin
