@@ -1,0 +1,30 @@
+# Copyright (c) 2025 Ayush Singh <ayush@beagleboard.org>
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  self:
+    west-commands: scripts/west-commands.yml
+
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+    - name: micropython
+      url-base: https://github.com/micropython
+    - name: beagle
+      url-base: https://github.com/beagleboard/
+
+  projects:
+    - name: zephyr
+      remote: beagle
+      revision: zephyr-4.0.0
+      import:
+        name-allowlist:
+          - hal_ti
+          - cmsis
+          # FIXME: cmsis_6 will be required from v4.1.0
+          # - cmsis_6
+
+    - name: micropython
+      remote: micropython
+      revision: master
+      path: modules/lib/micropython
