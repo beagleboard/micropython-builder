@@ -13,6 +13,10 @@ jobs:
   build:
     name: Build Artifacts for supported boards
     runs-on: ubuntu-22.04
+    env:
+      BOARDS: |
+        beagleconnect_freedom
+        beagleplay/cc1352p7
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,15 +32,14 @@ jobs:
           app-path: upstream_boards
           toolchains: arm-zephyr-eabi
 
-      - name: Build BeagleConnect Freedom firmware
+      - name: Building Firmware
         run: |
-          west build -p -b beagleconnect_freedom modules/lib/micropython/ports/zephyr -d build
-          mv build/zephyr/zephyr.bin beagleconnect_freedom.bin
-
-      - name: Build BeaglePlay CC1352P7 firmware
-        run: |
-          west build -p -b beagleplay/cc1352p7 modules/lib/micropython/ports/zephyr -d build
-          mv build/zephyr/zephyr.bin beagleplay_cc1352p7.bin
+          mkdir dist
+          for BOARD in $BOARDS; do
+            OUTPUT_FILE=$(echo "$BOARD" | sed 's/\//_/g').bin
+            west build -p -b "$BOARD" modules/lib/micropython/ports/zephyr -d build
+            mv build/zephyr/zephyr.bin "dist/$OUTPUT_FILE"
+          done
 
       - name: Pre-Release
         uses: softprops/action-gh-release@v2
@@ -47,5 +50,4 @@ jobs:
           tag_name: continuous-release
           body: Continuous builds of MicroPython
           files: |
-            beagleconnect_freedom.bin
-            beagleplay_cc1352p7.bin
+            dist/*.bin
