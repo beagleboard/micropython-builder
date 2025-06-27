@@ -13,9 +13,23 @@ jobs:
   build:
     name: Build Artifacts for supported boards
     runs-on: ubuntu-22.04
+    env:
+      OS_LIST_NAME: "MicroPython"
+      OS_LIST_DESC: "MicroPython is a lean and efficient implementation of the Python 3 programming language, specifically designed to run on microcontrollers and other embedded systems"
+      OS_LIST_ICON: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Micropython-logo.svg"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setting up variables
+        run: |
+          export RELEASE_DATE=$(date +"%Y-%m-%d")
+          echo "RELEASE_DATE=${RELEASE_DATE}" >> $GITHUB_ENV
+
+      - name: Setup
+        run: |
+          mkdir dist
+          jq -n '.imager = {} | .os_list = []' > os_list.json
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -28,39 +42,31 @@ jobs:
           app-path: upstream_boards
           toolchains: arm-zephyr-eabi
 
-      - name: Setup
-        run: |
-          mkdir dist
-          jq -n '[]' > os_list.json
-
       - name: Building For BeagleConnect Freedom
+        env:
+          DEVICE: beagleconnect-freedom
+          URL: "https://github.com/beagleboard/micropython-builder/releases/download/continuous-release/beagleconnect-freedom.bin.xz"
+          FLASHER: "BeagleConnectFreedom"
         run: |
             west build -p -b beagleconnect_freedom modules/lib/micropython/ports/zephyr -d build
-            mv build/zephyr/zephyr.bin dist/beagleconnect-freedom.bin
+            mv build/zephyr/zephyr.bin dist/${DEVICE}.bin
+            xz -z dist/${DEVICE}.bin
+            export SHA=$(sha256sum dist/${DEVICE}.bin.xz | cut -d " " -f 1)
+            jq '.os_list += [{ "name": env.OS_LIST_NAME, "description": env.OS_LIST_DESC, "icon": env.OS_LIST_ICON, "devices": [ env.DEVICE ], "tags": [ "zephyr" ], "image_download_sha256": env.SHA, "url": env.URL, "release_date": env.RELEASE_DATE } ]' os_list.json > os_list.json.tmp
+            mv os_list.json.tmp os_list.json
 
       - name: Building For BeaglePlay
+        env:
+          DEVICE: beagle-am62
+          URL: "https://github.com/beagleboard/micropython-builder/releases/download/continuous-release/beagle-am62.bin.xz"
+          FLASHER: "BeaglePlayCC1352P7"
         run: |
             west build -p -b beagleplay/cc1352p7 modules/lib/micropython/ports/zephyr -d build
-            mv build/zephyr/zephyr.bin dist/beagle-am62.bin
-
-      - name: Compress all binaries
-        run: xz -z dist/*.bin
-
-      - name: Generate OS List
-        env:
-          OS_LIST_NAME: "MicroPython"
-          OS_LIST_DESC: "MicroPython is a lean and efficient implementation of the Python 3 programming language, specifically designed to run on microcontrollers and other embedded systems"
-          OS_LIST_ICON: "https://en.wikipedia.org/wiki/File:Micropython-logo.svg"
-        run: |
-          for board_firm in dist/*.bin.xz; do
-            fname=$(basename $board_firm)
-            export DEVICE=${fname%.bin.xz}
-            export SHA=$(sha256sum $board_firm | cut -d " " -f 1)
-            export URL="https://github.com/beagleboard/micropython-builder/releases/download/continuous-release/${fname}"
-            export RELEASE_DATE=$(date +"%Y-%m-%d")
-            jq '. += [{ "name": env.OS_LIST_NAME, "description": env.OS_LIST_DESC, "icon": env.OS_LIST_ICON, "devices": [ env.DEVICE ], "tags": [ "zephyr" ], "image_download_sha256": env.SHA, "url": env.URL, "release_date": env.RELEASE_DATE }]' os_list.json > os_list.json.tmp
+            mv build/zephyr/zephyr.bin dist/${DEVICE}.bin
+            xz -z dist/${DEVICE}.bin
+            export SHA=$(sha256sum dist/${DEVICE}.bin.xz | cut -d " " -f 1)
+            jq '.os_list += [{ "name": env.OS_LIST_NAME, "description": env.OS_LIST_DESC, "icon": env.OS_LIST_ICON, "flasher": env.FLASHER, "subitems": [ { "name": env.OS_LIST_NAME, "description": env.OS_LIST_DESC, "icon": env.OS_LIST_ICON, "devices": [ env.DEVICE ], "tags": [ "zephyr" ], "image_download_sha256": env.SHA, "url": env.URL, "release_date": env.RELEASE_DATE } ] }]' os_list.json > os_list.json.tmp
             mv os_list.json.tmp os_list.json
-          done
 
       - name: Pre-Release
         uses: softprops/action-gh-release@v2
