@@ -42,33 +42,23 @@ jobs:
           app-path: upstream_boards
           toolchains: arm-zephyr-eabi
 
-      - name: Building For BeagleConnect Freedom
-        env:
-          DEVICE: beagleconnect-freedom
-          URL: "https://github.com/beagleboard/micropython-builder/releases/download/continuous-release/beagleconnect-freedom.bin.xz"
-          FLASHER: "BeagleConnectFreedom"
-        run: |
-            west build -p -b beagleconnect_freedom modules/lib/micropython/ports/zephyr -d build
-            mv build/zephyr/zephyr.bin dist/${DEVICE}.bin
-            xz -z dist/${DEVICE}.bin
-            export SHA=$(sha256sum dist/${DEVICE}.bin.xz | cut -d " " -f 1)
-            EXTRACT_SIZE=$(xz --robot --list dist/${DEVICE}.bin.xz | awk 'END {print $5}')
-            jq --argjson extract_size $EXTRACT_SIZE '.os_list += [{ "name": env.OS_LIST_NAME, "description": env.OS_LIST_DESC, "icon": env.OS_LIST_ICON, "devices": [ env.DEVICE ], "tags": [ "zephyr" ], "image_download_sha256": env.SHA, "url": env.URL, "release_date": env.RELEASE_DATE, "extract_size": $extract_size } ]' os_list.json > os_list.json.tmp
-            mv os_list.json.tmp os_list.json
-
       - name: Building For BeaglePlay
         env:
+          TARGET: beagleplay-cc1352p7.bin.xz
           DEVICE: beagle-am62
-          URL: "https://github.com/beagleboard/micropython-builder/releases/download/continuous-release/beagle-am62.bin.xz"
           FLASHER: "BeaglePlayCC1352P7"
         run: |
-            west build -p -b beagleplay/cc1352p7 modules/lib/micropython/ports/zephyr -d build
-            mv build/zephyr/zephyr.bin dist/${DEVICE}.bin
-            xz -z dist/${DEVICE}.bin
-            export SHA=$(sha256sum dist/${DEVICE}.bin.xz | cut -d " " -f 1)
-            EXTRACT_SIZE=$(xz --robot --list dist/${DEVICE}.bin.xz | awk 'END {print $5}')
-            jq --argjson extract_size $EXTRACT_SIZE '.os_list += [{ "name": env.OS_LIST_NAME, "description": env.OS_LIST_DESC, "icon": env.OS_LIST_ICON, "devices": [ env.DEVICE ], "tags": [ "zephyr" ], "image_download_sha256": env.SHA, "url": env.URL, "release_date": env.RELEASE_DATE, "extract_size": $extract_size } ]' os_list.json > os_list.json.tmp
-            mv os_list.json.tmp os_list.json
+          make dist/${TARGET}
+          ./os_list.sh ${TARGET}
+
+      - name: Building For BeagleConnect Freedom
+        env:
+          TARGET: beagleconnect_freedom.bin.xz
+          DEVICE: beagleconnect-freedom
+          FLASHER: "BeagleConnectFreedom"
+        run: |
+          make dist/${TARGET}
+          ./os_list.sh ${TARGET}
 
       - name: Pre-Release
         uses: softprops/action-gh-release@v2
