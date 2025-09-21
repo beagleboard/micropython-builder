@@ -31,6 +31,11 @@ jobs:
           mkdir dist
           jq -n '.imager = {} | .os_list = []' > os_list.json
 
+      - name: Install packaging deps
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends mtools
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -45,9 +50,12 @@ jobs:
       # No need for os_list.json since we cannot really "flash" it in it's current from.
       - name: Building For PocketBeagle 2 A53s
         env:
-          TARGET: pocketbeagle_2-am6254-a53.bin.xz
+          TARGET: pocketbeagle_2-am6254-a53.img.xz
+          DEVICE: pocketbeagle2-am62
+          FLASHER: SdCard
         run: |
-          make dist/${TARGET}
+          make -j$(nproc) dist/${TARGET}
+          ./os_list.sh ${TARGET}
 
       - name: Building For BeaglePlay
         env:
@@ -77,4 +85,5 @@ jobs:
           body: Continuous builds of MicroPython
           files: |
             dist/*.bin.xz
+            dist/*.img.xz
             os_list.json
