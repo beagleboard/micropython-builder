@@ -40,7 +40,14 @@ jobs:
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
           app-path: upstream_boards
-          toolchains: arm-zephyr-eabi
+          toolchains: arm-zephyr-eabi:aarch64-zephyr-elf
+
+      # No need for os_list.json since we cannot really "flash" it in it's current from.
+      - name: Building For PocketBeagle 2 A53s
+        env:
+          TARGET: pocketbeagle_2-am6254-a53.bin.xz
+        run: |
+          make dist/${TARGET}
 
       - name: Building For BeaglePlay
         env:
