@@ -47,15 +47,15 @@ jobs:
           app-path: upstream_boards
           toolchains: arm-zephyr-eabi:aarch64-zephyr-elf
 
-      # No need for os_list.json since we cannot really "flash" it in it's current from.
       - name: Building For PocketBeagle 2 A53s
         env:
-          TARGET: pocketbeagle_2-am6254-a53.img.xz
+          TARGET: pocketbeagle_2-am6254-a53
           DEVICE: pocketbeagle2-am62
           FLASHER: SdCard
         run: |
-          make -j$(nproc) dist/${TARGET}
-          ./os_list.sh ${TARGET}
+          make dist/${TARGET}.bin.xz
+          make -j$(nproc) dist/${TARGET}.img.xz
+          ./os_list.sh ${TARGET}.img.xz
 
       - name: Building For BeaglePlay
         env:
