@@ -19,7 +19,7 @@ jobs:
       OS_LIST_ICON: "https://media.githubusercontent.com/media/beagleboard/bb-imager-rs/refs/heads/main/assets/os/micropython.webp"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setting up variables
         run: |
