@@ -76,7 +76,7 @@ jobs:
           ./os_list.sh ${TARGET}
 
       - name: Pre-Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         with:
           prerelease: true
