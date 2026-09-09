@@ -60,7 +60,9 @@ jobs:
           toolchains: aarch64-zephyr-elf
 
       - name: Building For PocketBeagle 2
-        run: make dist/pocketbeagle_2-am6254-a53.bin.xz
+        run: |
+          make dist/pocketbeagle_2-am6254-a53.bin.xz
+          make -j$(nproc) dist/pocketbeagle_2-am6254-a53.img.xz
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
