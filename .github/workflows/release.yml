@@ -34,6 +34,12 @@ jobs:
       - name: Building For BeagleConnect Freedom
         run: make dist/beagleconnect_freedom.bin.xz
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          path: |
+            dist/*
+
   build-zephyr-main:
     name: Build Artifacts with mainline zephyr
     runs-on: ubuntu-latest
@@ -55,3 +61,38 @@ jobs:
 
       - name: Building For PocketBeagle 2
         run: make dist/pocketbeagle_2-am6254-a53.bin.xz
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          path: |
+            dist/*
+
+  release:
+    name: Upload Release artifacts
+    needs:
+      - build-zephyr-main
+      - build-zephyr-stable
+    runs-on: ubuntu-slim
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - run: ls -laR dist
+
+      - name: Generate os_list.json
+        run: ./os_list.py continuous-release
+
+      - name: Create Pre-Release
+        uses: softprops/action-gh-release@v3
+        with:
+          prerelease: true
+          name: Continuous Release
+          tag_name: continuous-release
+          files: dist/*
